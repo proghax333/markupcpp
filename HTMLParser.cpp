@@ -60,7 +60,7 @@ int main() {
 	document.display();
 	cout << endl << endl;
 	
-	cout << "POSITION OF paragraph: " << endl;
+	cout << "POSITION OF heading2: " << endl;
 	cout << endl << heading2.calculatePosition();
 	
 	return 0;
