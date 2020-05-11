@@ -26,10 +26,6 @@ int main() {
 	});
 	heading2.text = "This is just a sample heading tag!";
 	
-	body.addElement(heading);
-	body.addElement(heading2);
-	body.text = "This is just the body!";
-	
 	HTMLElement input("input", NOCLOSE);
 	input.attributes["name"] = "username";
 	input.attributes["type"] = "text";
@@ -37,22 +33,39 @@ int main() {
 	input.attributes["placeholder"] = "Enter Your Username";
 	input.attributes["id"] = "form-username";
 	
+	HTMLElement mainContainer("div");
+	mainContainer.attributes["class"] = "main-container";
+	
+	HTMLElement paragraph("p");
+	paragraph.text = "This is just a sample paragraph!";
+	
+	HTMLElement span("span");
+	span.text = "This is just another span!";
+	
+	mainContainer.addElement(span);
+	mainContainer.addElement(paragraph);
+	
 	body.addElement(input);
+	body.addElement(heading);
+	body.addElement(heading2);
+	body.addElement(mainContainer);
+	body.text = "This is just the body!";
 	
 	root.addElement(head);
 	root.addElement(body);
 	
 	document.root = &root;
 	
-	cout << "*** ORIGINAL DOCUMENT ***" << endl << endl;
 	document.display();
 	cout << endl << endl;
 	
-	
-	/* Changing Branches */
+	/* //Changing Branches
 	head.addNode(heading2);
 	cout << endl << endl << "BRANCHES CHANGED!" << endl << endl;
 	document.display();
+	*/
+	cout << "POSITION OF paragraph: " << endl;
+	cout << endl << paragraph.calculatePosition();
 	
 	return 0;
 }
