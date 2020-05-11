@@ -6,6 +6,7 @@
 #include "HTMLElementTypes.h"
 #include "HTMLElement.h"
 #include "HTMLDocument.h"
+#include "HTMLStyles.h"
 
 using namespace std;
 
@@ -17,12 +18,12 @@ int main() {
 	HTMLElement body("body");
 	HTMLElement heading ("h1", {
 		{ "class", "heading heading-main"},
-		{ "id", "main-heading" }		
+		{ "id", "main-heading" }
 	});
 	heading.text = "This is just a sample heading tag!";
 	HTMLElement heading2 ("h2", {
 		{ "class", "heading heading-sub"},
-		{ "id", "sub-heading" }		
+		{ "id", "sub-heading" }
 	});
 	heading2.text = "This is just a sample heading tag!";
 	
@@ -59,13 +60,8 @@ int main() {
 	document.display();
 	cout << endl << endl;
 	
-	/* //Changing Branches
-	head.addNode(heading2);
-	cout << endl << endl << "BRANCHES CHANGED!" << endl << endl;
-	document.display();
-	*/
 	cout << "POSITION OF paragraph: " << endl;
-	cout << endl << paragraph.calculatePosition();
+	cout << endl << heading2.calculatePosition();
 	
 	return 0;
 }

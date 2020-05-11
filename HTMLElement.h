@@ -9,6 +9,8 @@
 
 #include "HTMLElementTypes.h"
 
+using namespace std;
+
 class HTMLElement {
 	public:
 		vector<HTMLElement*> children;
@@ -172,11 +174,16 @@ class HTMLElement {
 				if(e->attributeExists("id")) {
 					path.push_back("#" + e->attributes["id"]);
 				} else if(e->attributeExists("class")) {
-					path.push_back("." + e->attributes["class"]);
+					vector<string> classes = e->getClasses();
+					string allClasses;
+					
+					for(string& c : classes) {
+						allClasses.append("." + c);
+					}
+					path.push_back(allClasses);
 				} else {
 					if(e->parent) {
 						int location = e->parent->getChildIndex(e);
-						
 						if(location == -1) {
 							path.push_back(e->type);
 						} else {
