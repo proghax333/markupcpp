@@ -187,7 +187,7 @@ class HTMLElement {
 						if(location == -1) {
 							path.push_back(e->type);
 						} else {
-							path.push_back(e->parent->type + ":nth-child(" + to_string(location + 1) + ")");
+							path.push_back(e->type + ":nth-child(" + to_string(location + 1) + ")");
 						}
 					} else {
 						path.push_back(e->type);
