@@ -7,19 +7,23 @@
 #include <unordered_map>
 #include <sstream>
 
+#define INDENT "  ";
+
 #include "HTMLElementTypes.h"
 
 using namespace std;
 
+vector<string> excludedTypes = { "style", "script" };
+
 class HTMLElement {
 	public:
+		Attributes attributes;
 		vector<HTMLElement*> children;
 		HTMLElement* parent = NULL;
-		Attributes attributes;
 		string type, text;
-		
+
 		HTMLElementType elementType;
-		
+
 		HTMLElement(const string& type, HTMLElementType elementType = NORMAL) :
 			type(type),
 			elementType(elementType) { }
@@ -27,20 +31,20 @@ class HTMLElement {
 			type(type),
 			attributes(attributes),
 			elementType(elementType) { }
-		
+
 		/*
+            * The Core Interface *
 			Interface for adding and removing HTMLElement from the list of child elements.
 		*/
-		
+
 		void addElement(HTMLElement& element) {
-			element.setParent(this);
-			children.push_back((HTMLElement*)&element);
+		    addElement(&element);
 		}
 		void addElement(HTMLElement* element) {
 			element->setParent(this);
 			children.push_back(element);
 		}
-		
+
 		void removeElement(HTMLElement& element) {
 			int count = 0;
 			for(HTMLElement* child : children) {
@@ -61,7 +65,27 @@ class HTMLElement {
 				++count;
 			}
 		}
-		
+        void setAttribute(const string& name, const string& value) {
+            attributes[name] = value;
+        }
+        void setAttribute(const Attribute& attribute) {
+            attributes.insert(attribute);
+        }
+        string getAttributeValue(const string& name) {
+            string value;
+            if(attributeExists(name))
+                return attributes[name];
+
+            return value;
+        }
+        bool removeAttribute(const string& name) {
+            if(attributeExists(name)) {
+                attributes.erase(name);
+                return true;
+            } else {
+                return false;
+            }
+        }
 		/*
 			Node Functionality for changing and removing branches.
 			Branches can directly be removed and changed using the following functions.
@@ -78,7 +102,7 @@ class HTMLElement {
 		void deleteNode(HTMLElement& element) {
 			removeElement(element);
 		}
-		
+
 		/*
 			Plain Text functions.
 		*/
@@ -88,7 +112,7 @@ class HTMLElement {
 		void setText(const string& text) {
 			this->text = text;
 		}
-		
+
 		/*
 			Functions for accessing and manipulating the parent of an HTMLElement.
 		*/
@@ -98,17 +122,19 @@ class HTMLElement {
 		void setParent(HTMLElement* parent) {
 			this->parent = parent;
 		}
-		
+
 		/*
 			Function to display an HTMLElement in stdout
 		*/
-		void displayElement() {
-			displayRecursive(this, 0);
+		void displayElement(const int& depth = 0, ostream& out = cout) {
+			displayRecursive(this, depth, out);
 		}
-		
+
 		bool attributeExists(const string& name) {
 			return attributes.count(name) > 0;
 		}
+
+		/* Get the list of class names */
 		vector<string> getClasses() {
 			vector<string> result;
 			if(attributeExists("class")) {
@@ -132,17 +158,21 @@ class HTMLElement {
 			}
 			return classes;
 		}
+
+		/* Some searching functionality */
 		HTMLElement* getElementById(const string& id) {
 			return searchIdRecursive(this, id);
 		}
 		vector<HTMLElement*> getElementsByClassName(const string& className) {
 			vector<HTMLElement*> results;
-			searchClassRecursive(results, this, className, getClasses(className));	
+			searchClassRecursive(results, this, className, getClasses(className));
 			return results;
 		}
 		void getElementsByClassName(vector<HTMLElement*>& results, const string& className) {
-			searchClassRecursive(results, this, className, getClasses(className));	
+			searchClassRecursive(results, this, className, getClasses(className));
 		}
+
+        /* Utilities for HTML Elements */
 		int getChildIndex(HTMLElement* element) {
 			int count = 0;
 			for(HTMLElement* child : children) {
@@ -153,13 +183,13 @@ class HTMLElement {
 			}
 			return -1;
 		}
-		
+
 		string calculatePosition() {
 			vector<string> path;
 			stringstream ss;
-			
+
 			calculatePositionRecursive(this, path);
-			
+
 			int size = path.size();
 			for(int i = size - 1; i >= 0; --i) {
 				ss << path[i];
@@ -176,7 +206,7 @@ class HTMLElement {
 				} else if(e->attributeExists("class")) {
 					vector<string> classes = e->getClasses();
 					string allClasses;
-					
+
 					for(string& c : classes) {
 						allClasses.append("." + c);
 					}
@@ -198,9 +228,20 @@ class HTMLElement {
 				}
 			}
 		}
+
+        int getDepth() {
+            int depth = getDepthRecursive(this);
+            return depth;
+        }
+        int getDepthRecursive(HTMLElement* element, int depth = 0) {
+            if(element->parent == NULL) {
+                return depth;
+            }
+            return getDepthRecursive(element->parent, depth + 1);
+        }
 	protected:
 		HTMLElement* searchIdRecursive(HTMLElement* e, const string& id) {
-			if(e->attributeExists("class")) {
+			if(e->attributeExists("id")) {
 				if(e->attributes["id"] == id) {
 					return e;
 				}
@@ -236,7 +277,7 @@ class HTMLElement {
 			if(e != NULL) {
 				if(className.empty() || parsedClassNames.empty())
 					return;
-				
+
 				bool valid = true;
 				if(e->attributes.count("class") > 0) {
 					if(e->attributes["class"] == className) {
@@ -254,50 +295,51 @@ class HTMLElement {
 				}
 			}
 		}
-		void printSpaces(int depth) {
+		void printSpaces(int depth, ostream& out) {
 			for(int i = 0; i < depth; ++i) {
-				cout << "  ";
+				out << INDENT;
 			}
 		}
-		void printTagStart(HTMLElement* e, int depth) {
-			printSpaces(depth);
-			cout << "<" << e->type;
+		void printTagStart(HTMLElement* e, int depth, ostream& out) {
+			printSpaces(depth, out);
+			out << "<" << e->type;
 			for(const Attribute& attribute : e->attributes) {
-				cout << ' ' << attribute.first << "=\"" << attribute.second << "\"";
+				out << ' ' << attribute.first << "=\"" << attribute.second << "\"";
 			}
 			if(e->elementType == NORMAL)
-				cout << ">";
+				out << ">";
 		}
-		void printChildren(HTMLElement* e, int depth) {
+		void printChildren(HTMLElement* e, int depth, ostream& out) {
 			for(HTMLElement* child : e->children) {
-				cout << endl;
-				displayRecursive(child, depth + 1);
+				out << endl;
+				displayRecursive(child, depth + 1, out);
 			}
 		}
-		void printText(HTMLElement* e, int depth) {
+		void printText(HTMLElement* e, int depth, ostream& out) {
 			if(!e->text.empty()) {
-				cout << endl;
-				printSpaces(depth + 1);
-				cout << e->text;
+				out << endl;
+                if(!isExcludedType(e))
+                    printSpaces(depth + 1, out);
+				out << e->text;
 			}
 		}
-		void printTagEnd(HTMLElement* e, int depth) {
+		void printTagEnd(HTMLElement* e, int depth, ostream& out) {
 			if(e->elementType == NORMAL) {
-				cout << endl;
-				printSpaces(depth);
-				cout << "</" << e->type << ">";
+				out << endl;
+				printSpaces(depth, out);
+				out << "</" << e->type << ">";
 			} else {
-				cout << " />";
+				out << " />";
 			}
 		}
-		void displayRecursive(HTMLElement* e, int depth) {
+		void displayRecursive(HTMLElement* e, int depth, ostream& out) {
 			if(e != NULL) {
-				printTagStart(e, depth);
+				printTagStart(e, depth, out);
 				if(e->elementType == NORMAL) {
-					printChildren(e, depth);
-					printText(e, depth);
+					printChildren(e, depth, out);
+					printText(e, depth, out);
 				}
-				printTagEnd(e, depth);
+				printTagEnd(e, depth, out);
 			}
 		}
 		void validate() {
@@ -307,4 +349,13 @@ class HTMLElement {
 				}
 			}
 		}
+        bool isExcludedType(HTMLElement* element) {
+            string& elementType = element->type;
+            for(string& type : excludedTypes) {
+                if(elementType == type) {
+                    return true;
+                }
+            }
+            return false;
+        }
 };
